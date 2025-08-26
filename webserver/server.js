@@ -283,10 +283,10 @@ app.post('/upload-data/:id', authenticateToken, (req, res) => {
     if (req.user.id !== id && req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Access denied: can only upload to your own ID' });
     }
-    const { timestamp, adc, vol, deadtime } = req.body;
+    const { event, timestamp, adc, vol, deadtime, temp } = req.body;
     
-    if (!timestamp || !adc || !vol || !deadtime) {
-        return res.status(400).json({ error: 'Missing required data' });
+    if (!event || !timestamp || !adc || !vol || !deadtime) {
+        return res.status(400).json({ error: 'Missing required data: event, timestamp, adc, vol, deadtime' });
     }
     
     const idDir = path.join(dataDir, id);
@@ -294,10 +294,12 @@ app.post('/upload-data/:id', authenticateToken, (req, res) => {
         return res.status(404).json({ error: 'ID directory not found' });
     }
     
-    // イベントのタイムスタンプから日付を取得
+    // タイムスタンプから日付部分を抽出
     const eventDate = timestamp.split('-').slice(0, 3).join('-'); // YYYY-MM-DD
     const filePath = path.join(idDir, `${eventDate}.dat`);
-    const dataLine = `${adc}\t${timestamp}\t${vol}\t${deadtime}\n`;
+    
+    // 7カラム形式: EVENT	DATE	TIME	ADC	SIMP	DEADTIME	TEMP
+    const dataLine = `${event}\t${eventDate}\t${timestamp}\t${adc}\t${vol}\t${deadtime}\t${temp || '25.0'}\n`;
     
     fs.appendFile(filePath, dataLine, (err) => {
         if (err) {
@@ -305,7 +307,7 @@ app.post('/upload-data/:id', authenticateToken, (req, res) => {
             return res.status(500).json({ error: 'Failed to save data' });
         }
         
-        console.log(`Data saved [${id}]: ${timestamp} - ADC: ${adc}, Vol: ${vol}, Deadtime: ${deadtime}`);
+        console.log(`Data saved [${id}]: Event: ${event}, Timestamp: ${timestamp}, ADC: ${adc}, Vol: ${vol}, Deadtime: ${deadtime}, Temp: ${temp || '25.0'}`);
         res.json({ success: true, message: 'Data uploaded successfully' });
     });
 });
