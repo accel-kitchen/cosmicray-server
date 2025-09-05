@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Ray Data Server</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            flex: 1;
+            padding: 40px 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .info {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .api-list {
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .api-list h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        .api-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .api-list li {
+            margin: 10px 0;
+            padding: 8px;
+            background: #f8f8f8;
+            border-left: 3px solid #007bff;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-top: auto;
+        }
+        footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cosmic Ray Data Server</h1>
+        
+        <div class="info">
+            <h2>サーバー情報</h2>
+            <p>宇宙線測定データの収集・管理システム</p>
+            <p>このサーバーは宇宙線検出器からのデータを受信し、Web経由でのデータ閲覧・ダウンロード機能を提供します。</p>
+        </div>
+
+        <div class="api-list">
+            <h3>主要なエンドポイント</h3>
+            <ul>
+                <li><strong>GET /health</strong> - ヘルスチェック</li>
+                <li><strong>POST /auth/login</strong> - ユーザーログイン</li>
+                <li><strong>GET /list-ids</strong> - 測定ID一覧</li>
+                <li><strong>GET /api/files/:id</strong> - データファイル一覧</li>
+                <li><strong>GET /api/download/:id/:filename</strong> - データダウンロード</li>
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Cosmic Ray Data Server</p>
+    </footer>
+</body>
+</html>

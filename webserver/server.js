@@ -283,10 +283,11 @@ app.post('/upload-data/:id', authenticateToken, (req, res) => {
     if (req.user.id !== id && req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Access denied: can only upload to your own ID' });
     }
-    const { event, timestamp, adc, vol, deadtime, temp } = req.body;
+    const { event, date, time, timestamp, adc, deadtime, temp } = req.body;
+    const vol = req.body.vol ?? req.body.sipm; // accept sipm alias
     
-    if (!event || !timestamp || !adc || !vol || !deadtime) {
-        return res.status(400).json({ error: 'Missing required data: event, timestamp, adc, vol, deadtime' });
+    if (!event || (!date && !timestamp) || !adc || vol === undefined || !deadtime) {
+        return res.status(400).json({ error: 'Missing required data: event, date(or timestamp), adc, vol(or sipm), deadtime' });
     }
     
     const idDir = path.join(dataDir, id);
@@ -294,12 +295,27 @@ app.post('/upload-data/:id', authenticateToken, (req, res) => {
         return res.status(404).json({ error: 'ID directory not found' });
     }
     
-    // タイムスタンプから日付部分を抽出
-    const eventDate = timestamp.split('-').slice(0, 3).join('-'); // YYYY-MM-DD
+    // タイムスタンプから日付と時刻を抽出
+    let eventDate = '';
+    let timeOfDay = '';
+    const tsSource = (typeof date === 'string' && date.length > 0) ? date : timestamp;
+    if (typeof tsSource === 'string') {
+        const parts = tsSource.split('-');
+        if (parts.length >= 6) {
+            eventDate = parts.slice(0, 3).join('-');
+            timeOfDay = [parts[3], parts[4], parts.slice(5).join('-')].join('-');
+        } else {
+            eventDate = new Date().toISOString().split('T')[0];
+            timeOfDay = tsSource;
+        }
+    } else {
+        eventDate = new Date().toISOString().split('T')[0];
+        timeOfDay = String(tsSource);
+    }
     const filePath = path.join(idDir, `${eventDate}.dat`);
     
     // 7カラム形式: EVENT	DATE	TIME	ADC	SIMP	DEADTIME	TEMP
-    const dataLine = `${event}\t${eventDate}\t${timestamp}\t${adc}\t${vol}\t${deadtime}\t${temp || '25.0'}\n`;
+    const dataLine = `${event}\t${eventDate}-${timeOfDay}\t${(time ?? (Date.now()*1000))}\t${adc}\t${vol}\t${deadtime}\t${temp || '25.0'}\n`;
     
     fs.appendFile(filePath, dataLine, (err) => {
         if (err) {
@@ -307,7 +323,7 @@ app.post('/upload-data/:id', authenticateToken, (req, res) => {
             return res.status(500).json({ error: 'Failed to save data' });
         }
         
-        console.log(`Data saved [${id}]: Event: ${event}, Timestamp: ${timestamp}, ADC: ${adc}, Vol: ${vol}, Deadtime: ${deadtime}, Temp: ${temp || '25.0'}`);
+        console.log(`Data saved [${id}]: Event: ${event}, Datetime: ${eventDate}-${timeOfDay}, Time(us): ${time ?? (Date.now()*1000)}, ADC: ${adc}, SiPM/Vol: ${vol}, Deadtime: ${deadtime}, Temp: ${temp || '25.0'}`);
         res.json({ success: true, message: 'Data uploaded successfully' });
     });
 });
